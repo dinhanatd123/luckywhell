@@ -485,9 +485,16 @@ export default function App() {
     try {
       await signInWithPopup(auth, googleProvider);
     } catch (err) {
-      setSyncError(
-        err instanceof Error ? err.message : 'Không thể đăng nhập Google. Vui lòng thử lại.'
-      );
+      const msg = err instanceof Error ? err.message : String(err);
+      if (msg.includes('auth/unauthorized-domain')) {
+        setSyncError(
+          `Tên miền "${window.location.hostname}" chưa được cấp phép trong Firebase Authentication (Authorized domains). Hãy thêm "${window.location.hostname}" vào Firebase Console → Authentication → Settings → Authorized domains.`
+        );
+      } else {
+        setSyncError(
+          err instanceof Error ? err.message : 'Không thể đăng nhập Google. Vui lòng thử lại.'
+        );
+      }
     }
   };
 
