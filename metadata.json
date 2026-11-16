@@ -1,0 +1,6 @@
+{
+  "name": "Lucky Wheel & Prize Award Studio",
+  "description": "Vòng quay may mắn và trao thưởng sự kiện hiện đại tích hợp cơ sở dữ liệu Firebase Firestore.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

@@ -1,0 +1,240 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Global safety net: deny everything by default
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    function isSignedIn() {
+      return request.auth != null && request.auth.token.email_verified == true;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() >= 1 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    function isEventOwner(eventId) {
+      return exists(/databases/$(database)/documents/events/$(eventId))
+        && get(/databases/$(database)/documents/events/$(eventId)).data.ownerId == request.auth.uid;
+    }
+
+    function isValidEvent(data) {
+      return data.keys().hasAll([
+          'ownerId', 'title', 'theme', 'spinDuration',
+          'autoRemoveWinner', 'selectedPrizeId', 'createdAt', 'updatedAt'
+        ])
+        && data.keys().hasOnly([
+          'ownerId', 'title', 'theme', 'spinDuration',
+          'autoRemoveWinner', 'selectedPrizeId', 'createdAt', 'updatedAt'
+        ])
+        && isValidId(data.ownerId)
+        && data.ownerId == request.auth.uid
+        && data.title is string && data.title.size() >= 1 && data.title.size() <= 160
+        && data.theme in ['cyber', 'gala', 'light']
+        && data.spinDuration is number && data.spinDuration >= 3 && data.spinDuration <= 15
+        && data.autoRemoveWinner is bool
+        && data.selectedPrizeId is string && data.selectedPrizeId.size() <= 128
+        && data.createdAt is timestamp
+        && data.updatedAt is timestamp;
+    }
+
+    function isValidParticipant(data, eventId) {
+      return data.keys().hasAll([
+          'eventId', 'ownerId', 'name', 'active', 'order', 'createdAt', 'updatedAt'
+        ])
+        && data.keys().hasOnly([
+          'eventId', 'ownerId', 'name', 'active', 'order', 'createdAt', 'updatedAt'
+        ])
+        && isValidId(data.eventId) && data.eventId == eventId
+        && isValidId(data.ownerId) && data.ownerId == request.auth.uid
+        && data.name is string && data.name.size() >= 1 && data.name.size() <= 120
+        && data.active is bool
+        && data.order is number && data.order >= 0 && data.order <= 100000
+        && data.createdAt is timestamp
+        && data.updatedAt is timestamp;
+    }
+
+    function isValidPrize(data, eventId) {
+      return data.keys().hasAll([
+          'eventId', 'ownerId', 'name', 'reward',
+          'totalQuantity', 'remainingQuantity', 'order', 'createdAt', 'updatedAt'
+        ])
+        && data.keys().hasOnly([
+          'eventId', 'ownerId', 'name', 'reward',
+          'totalQuantity', 'remainingQuantity', 'order', 'createdAt', 'updatedAt'
+        ])
+        && isValidId(data.eventId) && data.eventId == eventId
+        && isValidId(data.ownerId) && data.ownerId == request.auth.uid
+        && data.name is string && data.name.size() >= 1 && data.name.size() <= 120
+        && data.reward is string && data.reward.size() >= 1 && data.reward.size() <= 160
+        && data.totalQuantity is number && data.totalQuantity >= 1 && data.totalQuantity <= 10000
+        && data.remainingQuantity is number && data.remainingQuantity >= 0 && data.remainingQuantity <= data.totalQuantity
+        && data.order is number && data.order >= 0 && data.order <= 10000
+        && data.createdAt is timestamp
+        && data.updatedAt is timestamp;
+    }
+
+    function isValidWinnerRecord(data, eventId) {
+      return data.keys().hasAll([
+          'eventId', 'ownerId', 'participantId', 'participantName',
+          'prizeId', 'prizeName', 'prizeReward', 'awardedAt', 'createdAt'
+        ])
+        && data.keys().hasOnly([
+          'eventId', 'ownerId', 'participantId', 'participantName',
+          'prizeId', 'prizeName', 'prizeReward', 'awardedAt', 'createdAt'
+        ])
+        && isValidId(data.eventId) && data.eventId == eventId
+        && isValidId(data.ownerId) && data.ownerId == request.auth.uid
+        && isValidId(data.participantId)
+        && data.participantName is string && data.participantName.size() >= 1 && data.participantName.size() <= 120
+        && isValidId(data.prizeId)
+        && data.prizeName is string && data.prizeName.size() >= 1 && data.prizeName.size() <= 120
+        && data.prizeReward is string && data.prizeReward.size() >= 1 && data.prizeReward.size() <= 160
+        && data.awardedAt is timestamp
+        && data.createdAt is timestamp;
+    }
+
+    match /events/{eventId} {
+      allow get: if isSignedIn() && isValidId(eventId) && existing().ownerId == request.auth.uid;
+      allow list: if isSignedIn() && resource.data.ownerId == request.auth.uid;
+
+      allow create: if isSignedIn()
+        && isValidId(eventId)
+        && isValidEvent(incoming())
+        && incoming().createdAt == request.time
+        && incoming().updatedAt == request.time;
+
+      allow update: if isSignedIn()
+        && isValidId(eventId)
+        && isValidEvent(incoming())
+        && existing().ownerId == request.auth.uid
+        && incoming().ownerId == existing().ownerId
+        && incoming().createdAt == existing().createdAt
+        && incoming().updatedAt == request.time
+        && (
+          incoming().diff(existing()).affectedKeys().hasOnly(['title', 'updatedAt'])
+          || incoming().diff(existing()).affectedKeys().hasOnly(['theme', 'updatedAt'])
+          || incoming().diff(existing()).affectedKeys().hasOnly(['spinDuration', 'updatedAt'])
+          || incoming().diff(existing()).affectedKeys().hasOnly(['autoRemoveWinner', 'updatedAt'])
+          || incoming().diff(existing()).affectedKeys().hasOnly(['selectedPrizeId', 'updatedAt'])
+          || incoming().diff(existing()).affectedKeys().hasOnly(['title', 'theme', 'spinDuration', 'autoRemoveWinner', 'selectedPrizeId', 'updatedAt'])
+        );
+
+      allow delete: if isSignedIn() && isValidId(eventId) && existing().ownerId == request.auth.uid;
+
+      match /participants/{participantId} {
+        allow get: if isSignedIn()
+          && isValidId(eventId)
+          && isValidId(participantId)
+          && existing().ownerId == request.auth.uid
+          && isEventOwner(eventId);
+        allow list: if isSignedIn() && resource.data.ownerId == request.auth.uid;
+
+        allow create: if isSignedIn()
+          && isValidId(eventId)
+          && isValidId(participantId)
+          && isValidParticipant(incoming(), eventId)
+          && incoming().createdAt == request.time
+          && incoming().updatedAt == request.time
+          && isEventOwner(eventId);
+
+        allow update: if isSignedIn()
+          && isValidId(eventId)
+          && isValidId(participantId)
+          && isValidParticipant(incoming(), eventId)
+          && existing().ownerId == request.auth.uid
+          && incoming().ownerId == existing().ownerId
+          && incoming().eventId == existing().eventId
+          && incoming().createdAt == existing().createdAt
+          && incoming().updatedAt == request.time
+          && isEventOwner(eventId)
+          && (
+            incoming().diff(existing()).affectedKeys().hasOnly(['active', 'updatedAt'])
+            || incoming().diff(existing()).affectedKeys().hasOnly(['name', 'updatedAt'])
+            || incoming().diff(existing()).affectedKeys().hasOnly(['order', 'updatedAt'])
+            || incoming().diff(existing()).affectedKeys().hasOnly(['name', 'active', 'order', 'updatedAt'])
+          );
+
+        allow delete: if isSignedIn()
+          && isValidId(eventId)
+          && isValidId(participantId)
+          && existing().ownerId == request.auth.uid
+          && isEventOwner(eventId);
+      }
+
+      match /prizes/{prizeId} {
+        allow get: if isSignedIn()
+          && isValidId(eventId)
+          && isValidId(prizeId)
+          && existing().ownerId == request.auth.uid
+          && isEventOwner(eventId);
+        allow list: if isSignedIn() && resource.data.ownerId == request.auth.uid;
+
+        allow create: if isSignedIn()
+          && isValidId(eventId)
+          && isValidId(prizeId)
+          && isValidPrize(incoming(), eventId)
+          && incoming().createdAt == request.time
+          && incoming().updatedAt == request.time
+          && isEventOwner(eventId);
+
+        allow update: if isSignedIn()
+          && isValidId(eventId)
+          && isValidId(prizeId)
+          && isValidPrize(incoming(), eventId)
+          && existing().ownerId == request.auth.uid
+          && incoming().ownerId == existing().ownerId
+          && incoming().eventId == existing().eventId
+          && incoming().createdAt == existing().createdAt
+          && incoming().updatedAt == request.time
+          && isEventOwner(eventId)
+          && (
+            incoming().diff(existing()).affectedKeys().hasOnly(['remainingQuantity', 'updatedAt'])
+            || incoming().diff(existing()).affectedKeys().hasOnly(['name', 'reward', 'totalQuantity', 'remainingQuantity', 'order', 'updatedAt'])
+          );
+
+        allow delete: if isSignedIn()
+          && isValidId(eventId)
+          && isValidId(prizeId)
+          && existing().ownerId == request.auth.uid
+          && isEventOwner(eventId);
+      }
+
+      match /winners/{winnerId} {
+        allow get: if isSignedIn()
+          && isValidId(eventId)
+          && isValidId(winnerId)
+          && existing().ownerId == request.auth.uid
+          && isEventOwner(eventId);
+        allow list: if isSignedIn() && resource.data.ownerId == request.auth.uid;
+
+        allow create: if isSignedIn()
+          && isValidId(eventId)
+          && isValidId(winnerId)
+          && isValidWinnerRecord(incoming(), eventId)
+          && incoming().awardedAt == request.time
+          && incoming().createdAt == request.time
+          && isEventOwner(eventId);
+
+        allow update: if false;
+
+        allow delete: if isSignedIn()
+          && isValidId(eventId)
+          && isValidId(winnerId)
+          && existing().ownerId == request.auth.uid
+          && isEventOwner(eventId);
+      }
+    }
+  }
+}

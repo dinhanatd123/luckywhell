@@ -1,0 +1,130 @@
+@import "tailwindcss";
+
+@custom-variant dark (&:where([data-theme="cyber"], [data-theme="cyber"] *, [data-theme="gala"], [data-theme="gala"] *));
+
+:root,
+[data-theme="cyber"] {
+  --bg-canvas: #0b0f19;
+  --bg-radial: radial-gradient(circle at 22% 18%, rgba(6, 182, 212, 0.14), transparent 46%),
+    radial-gradient(circle at 82% 80%, rgba(245, 158, 11, 0.1), transparent 44%);
+  --bg-surface: rgba(17, 24, 39, 0.78);
+  --bg-surface-solid: #111827;
+  --bg-surface-elevated: rgba(30, 41, 59, 0.72);
+  --bg-input: rgba(15, 23, 42, 0.85);
+  --border-hairline: rgba(148, 163, 184, 0.18);
+  --border-strong: rgba(6, 182, 212, 0.4);
+  --text-primary: #f8fafc;
+  --text-secondary: #cbd5e1;
+  --text-muted: #94a3b8;
+  --accent-primary: #06b6d4;
+  --accent-primary-hover: #0891b2;
+  --accent-primary-fg: #042f2e;
+  --accent-gold: #f59e0b;
+  --accent-soft: rgba(6, 182, 212, 0.14);
+  --shadow-stage: 0 24px 60px -15px rgba(0, 0, 0, 0.65);
+  color-scheme: dark;
+}
+
+[data-theme="gala"] {
+  --bg-canvas: #24080e;
+  --bg-radial: radial-gradient(circle at 25% 20%, rgba(234, 179, 8, 0.18), transparent 46%),
+    radial-gradient(circle at 80% 78%, rgba(220, 38, 38, 0.28), transparent 50%);
+  --bg-surface: rgba(62, 14, 24, 0.88);
+  --bg-surface-solid: #3e0e18;
+  --bg-surface-elevated: rgba(88, 21, 35, 0.84);
+  --bg-input: rgba(44, 10, 17, 0.92);
+  --border-hairline: rgba(251, 191, 36, 0.24);
+  --border-strong: rgba(234, 179, 8, 0.55);
+  --text-primary: #fefce8;
+  --text-secondary: #fef08a;
+  --text-muted: #e5c3ad;
+  --accent-primary: #eab308;
+  --accent-primary-hover: #ca8a04;
+  --accent-primary-fg: #2b090e;
+  --accent-gold: #fbbf24;
+  --accent-soft: rgba(234, 179, 8, 0.18);
+  --shadow-stage: 0 24px 60px -15px rgba(15, 2, 5, 0.72);
+  color-scheme: dark;
+}
+
+[data-theme="light"] {
+  --bg-canvas: #f3f5f8;
+  --bg-radial: radial-gradient(circle at 22% 16%, rgba(37, 99, 235, 0.08), transparent 46%),
+    radial-gradient(circle at 80% 82%, rgba(217, 119, 6, 0.06), transparent 44%);
+  --bg-surface: rgba(255, 255, 255, 0.88);
+  --bg-surface-solid: #ffffff;
+  --bg-surface-elevated: rgba(241, 245, 249, 0.9);
+  --bg-input: #ffffff;
+  --border-hairline: rgba(15, 23, 42, 0.12);
+  --border-strong: rgba(37, 99, 235, 0.42);
+  --text-primary: #0f172a;
+  --text-secondary: #334155;
+  --text-muted: #64748b;
+  --accent-primary: #2563eb;
+  --accent-primary-hover: #1d4ed8;
+  --accent-primary-fg: #ffffff;
+  --accent-gold: #d97706;
+  --accent-soft: rgba(37, 99, 235, 0.1);
+  --shadow-stage: 0 20px 50px -16px rgba(15, 23, 42, 0.14);
+  color-scheme: light;
+}
+
+@layer base {
+  html,
+  body {
+    font-family: 'Be Vietnam Pro', system-ui, -apple-system, sans-serif;
+    background-color: var(--bg-canvas);
+    color: var(--text-primary);
+    min-height: 100%;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .font-mono-tabular {
+    font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, monospace;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .tabular-nums {
+    font-variant-numeric: tabular-nums;
+  }
+}
+
+.studio-backdrop {
+  background-color: var(--bg-canvas);
+  background-image: var(--bg-radial);
+  transition: background-color 220ms ease;
+}
+
+.glass-panel {
+  background: var(--bg-surface);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid var(--border-hairline);
+  box-shadow: var(--shadow-stage);
+}
+
+.surface-elevated {
+  background: var(--bg-surface-elevated);
+  border: 1px solid var(--border-hairline);
+}
+
+.studio-input {
+  background: var(--bg-input);
+  border: 1px solid var(--border-hairline);
+  color: var(--text-primary);
+}
+
+.studio-input:focus {
+  outline: none;
+  border-color: var(--accent-primary);
+  box-shadow: 0 0 0 2px var(--accent-soft);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}

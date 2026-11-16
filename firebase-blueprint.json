@@ -1,0 +1,242 @@
+{
+  "entities": {
+    "LuckyEvent": {
+      "title": "LuckyEvent",
+      "description": "An event workspace containing configuration for a lucky wheel session.",
+      "type": "object",
+      "properties": {
+        "ownerId": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$",
+          "description": "Firebase Auth UID of the event owner."
+        },
+        "title": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 160,
+          "description": "Display title of the event."
+        },
+        "theme": {
+          "type": "string",
+          "enum": ["cyber", "gala", "light"],
+          "description": "Active visual theme for the event stage."
+        },
+        "spinDuration": {
+          "type": "number",
+          "description": "Spin deceleration duration in seconds (3 to 15)."
+        },
+        "autoRemoveWinner": {
+          "type": "boolean",
+          "description": "Whether confirmed winners are automatically hidden from subsequent spins."
+        },
+        "selectedPrizeId": {
+          "type": "string",
+          "minLength": 0,
+          "maxLength": 128,
+          "description": "Currently selected prize ID on the stage."
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server creation timestamp."
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server last update timestamp."
+        }
+      },
+      "required": [
+        "ownerId",
+        "title",
+        "theme",
+        "spinDuration",
+        "autoRemoveWinner",
+        "selectedPrizeId",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "Participant": {
+      "title": "Participant",
+      "description": "A participant entry on the lucky wheel.",
+      "type": "object",
+      "properties": {
+        "eventId": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "ownerId": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "name": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 120
+        },
+        "active": {
+          "type": "boolean"
+        },
+        "order": {
+          "type": "number"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": ["eventId", "ownerId", "name", "active", "order", "createdAt", "updatedAt"]
+    },
+    "Prize": {
+      "title": "Prize",
+      "description": "A prize tier available for spinning.",
+      "type": "object",
+      "properties": {
+        "eventId": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "ownerId": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "name": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 120
+        },
+        "reward": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 160
+        },
+        "totalQuantity": {
+          "type": "number"
+        },
+        "remainingQuantity": {
+          "type": "number"
+        },
+        "order": {
+          "type": "number"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "eventId",
+        "ownerId",
+        "name",
+        "reward",
+        "totalQuantity",
+        "remainingQuantity",
+        "order",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "WinnerRecord": {
+      "title": "WinnerRecord",
+      "description": "A confirmed prize award record in the honor roll.",
+      "type": "object",
+      "properties": {
+        "eventId": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "ownerId": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "participantId": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "participantName": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 120
+        },
+        "prizeId": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "prizeName": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 120
+        },
+        "prizeReward": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 160
+        },
+        "awardedAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "eventId",
+        "ownerId",
+        "participantId",
+        "participantName",
+        "prizeId",
+        "prizeName",
+        "prizeReward",
+        "awardedAt",
+        "createdAt"
+      ]
+    }
+  },
+  "firestore": {
+    "/events/{eventId}": {
+      "schema": { "$ref": "#/entities/LuckyEvent" },
+      "description": "Top-level event workspace document owned by an authenticated user."
+    },
+    "/events/{eventId}/participants/{participantId}": {
+      "schema": { "$ref": "#/entities/Participant" },
+      "description": "Participants belonging to an event."
+    },
+    "/events/{eventId}/prizes/{prizeId}": {
+      "schema": { "$ref": "#/entities/Prize" },
+      "description": "Prize tiers belonging to an event."
+    },
+    "/events/{eventId}/winners/{winnerId}": {
+      "schema": { "$ref": "#/entities/WinnerRecord" },
+      "description": "Confirmed award records belonging to an event."
+    }
+  }
+}
